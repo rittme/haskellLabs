@@ -126,14 +126,34 @@ playBank :: Hand -> Hand
 playBank deck = playBank' deck Empty
 
 
--- shuffle : Given a StdGen and a hand of cards, 
---           shuffles the cards and returns the shuffled hand:
+-- shuffle : shuffles a deck of cards
 shuffle :: StdGen -> Hand -> Hand
-shuffle g Empty = Empty
-shuffle g deck  = (Add (pickCard deck n') (removeCard deck n'))
-      where (n',g') = randomR (1,52) g 
+shuffle gen deck = shuffleHelper gen deck Empty
 
 
+
+-- shuffleHelper : 
+shuffleHelper :: StdGen -> Hand -> Hand -> Hand
+shuffleHelper gen Empty hand = hand
+shuffleHelper gen deck hand  = shuffleHelper gen' deck' (Add card' hand) 
+              where ((deck', card'), gen') = getRandomCard gen deck
+
+-- getRandomCard : gets a random card from a deck
+getRandomCard :: StdGen -> Hand -> ((Hand, Card), StdGen)
+getRandomCard gen deck = ((pickCard deck Empty n), gen') 
+                            where (gen', n) = getRandomNumber gen (size deck-1)
+
+
+pickCard :: Hand -> Hand -> Integer -> (Hand, Card)
+pickCard Empty _ _               = error "pickCard: empty hand."
+pickCard (Add card source) dest n 
+                    | n == 0     = ((source <+ dest), card)
+                    | otherwise  = pickCard source (Add card dest) (n-1)
+
+getRandomNumber :: StdGen -> Integer -> (StdGen, Integer)
+getRandomNumber gen max = (gen', n) 
+                where (n, gen') = randomR (0, max) gen
+{-
 -- removeCard : removes the n-th card from a deck
 removeCard :: Hand -> Integer -> Hand
 removeCard Empty _ = Empty
@@ -145,7 +165,7 @@ removeCard (Add card hand) n  | n == 1    = hand
 pickCard :: Hand -> Integer -> Card
 pickCard Empty _                        = error "pickCard: empty hand."
 pickCard (Add card hand) n  | n == 1    = card
-                            | otherwise = pickCard hand (n-1)
+                            | otherwise = pickCard hand (n-1) -}
 
 
 -- shuffle properties 
@@ -160,7 +180,9 @@ prop_shuffle_sameCards g c h = c `belongsTo` h == c `belongsTo` shuffle g h
 prop_size_shuffle :: StdGen -> Hand -> Bool
 prop_size_shuffle g hand = size hand == size (shuffle g hand)
 
--- main : run the game
+{-
+ *** main : run the game **
+-}
 implementation = Interface
   { iEmpty = empty
   , iFullDeck = fullDeck
