@@ -7,7 +7,8 @@ module BlackJack where
 import Cards
 import Wrapper
 
-import Test.QuickCheck
+--import Test.QuickCheck
+import System.Random
 
 {-
   size hand2  = size (Add (Card (Numeric 2) Hearts)(Add(Card Jack Spades) Empty))
@@ -112,4 +113,50 @@ draw :: Hand -> Hand -> (Hand, Hand)
 draw Empty hand             = error "draw: The deck is empty."
 draw (Add card hand1) hand2 = (hand1 , (Add card hand2))
 
+
+-- playBank : Given a deck, plays for the bank according to the rules
+--            and returns the bank’s final hand
+
+playBank' :: Hand -> Hand -> Hand
+playBank' deck bankHand  | value bankHand < 16 = playBank' deck' bankHand'
+                         | otherwise           = bankHand
+        where (deck' , bankHand') = draw deck bankHand 
+
+playBank :: Hand -> Hand
+playBank deck = playBank' deck Empty
+
+
+-- shuffle : Given a StdGen and a hand of cards, 
+--           shuffles the cards and returns the shuffled hand:
+shuffle :: StdGen -> Hand -> Hand
+shuffle g Empty = Empty
+shuffle g deck  = (Add (pickCard deck n') (removeCard deck n'))
+      where (n',g') = randomR (1,52) g 
+
+
+-- removeCard : removes the n-th card from a deck
+removeCard :: Hand -> Integer -> Hand
+removeCard Empty _ = Empty
+removeCard (Add card hand) n  | n == 1    = hand
+                              | otherwise = (Add card (removeCard hand (n-1)))
+
+
+-- pickCard : pick a card from a deck
+pickCard :: Hand -> Integer -> Card
+pickCard Empty _                        = error "pickCard: empty hand."
+pickCard (Add card hand) n  | n == 1    = card
+                            | otherwise = pickCard hand (n-1)
+
+
+-- shuffle properties 
+belongsTo :: Card -> Hand -> Bool
+c `belongsTo` Empty       = False
+c `belongsTo` (Add card h)  = c == card || c `belongsTo` h
+
+prop_shuffle_sameCards :: StdGen -> Card -> Hand -> Bool
+prop_shuffle_sameCards g c h = c `belongsTo` h == c `belongsTo` shuffle g h
+
+-- prop_size_shuffle : Size not changed by shuffle
+prop_size_shuffle :: StdGen -> Hand -> Bool
+prop_size_shuffle g hand = size hand == size (shuffle g hand)
 
