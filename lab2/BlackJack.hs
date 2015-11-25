@@ -22,11 +22,6 @@ empty :: Hand
 empty = Empty
 
 
--- test empty properties
-prop_empty :: Bool
-prop_empty = size empty == 0
-
-
 -- Calculates the value of a Rank
 valueRank :: Rank -> Integer
 valueRank (Numeric r) = r
@@ -36,7 +31,7 @@ valueRank _           = 10
 
 -- Calculates the value of a Card
 valueCard :: Card -> Integer
-valueCard (Card r _) = valueRank r
+valueCard = valueRank . rank
 
 
 -- Calculates the number of aces in a given hand
@@ -68,59 +63,60 @@ winner handGuest handBank | gameOver handGuest                 = Bank
                           | value handGuest > value handBank   = Guest
                           | otherwise                          = Bank
 
+
 -- <+ : given 2 hands, puts the first on top of the second one
 (<+) :: Hand -> Hand -> Hand
 hand1 <+ Empty            = hand1
 Empty <+ hand2            = hand2
-(Add card hand1) <+ hand2 = (Add card (hand1 <+ hand2) )
+(Add card hand1) <+ hand2 = Add card $ hand1 <+ hand2
+
 
 -- associative property of (<+) operator
 prop_onTopOf_assoc :: Hand -> Hand -> Hand -> Bool
 prop_onTopOf_assoc p1 p2 p3 = p1 <+ (p2 <+ p3) == (p1 <+ p2) <+ p3
 
+
 -- The size of the combined hand equals the sum of the 2 given hands
 prop_size_onTopOf :: Hand -> Hand -> Bool
 prop_size_onTopOf h1 h2 = size (h1 <+ h2) == size h1 + size h2
 
+
 -- fullDeck : returns a full deck of cards
 fullDeck :: Hand
-fullDeck =  (handBySuit Hearts)   <+ 
-            (handBySuit Spades)   <+ 
-            (handBySuit Diamonds) <+ 
-            (handBySuit Clubs)
+fullDeck = fullSuit Hearts   <+
+           fullSuit Spades   <+
+           fullSuit Diamonds <+
+           fullSuit Clubs
 
 
--- handBySuit: returns a hand consisting of all the cards in the given suit
-handBySuit :: Suit -> Hand
-handBySuit s =  (Add (Card Ace s) 
-                (Add (Card King s) 
-                (Add (Card Queen s) 
-                (Add (Card Jack s)
-                (Add (Card (Numeric 10) s)
-                (Add (Card (Numeric 9) s)
-                (Add (Card (Numeric 8) s)
-                (Add (Card (Numeric 7) s)
-                (Add (Card (Numeric 6) s)
-                (Add (Card (Numeric 5) s)
-                (Add (Card (Numeric 4) s)
-                (Add (Card (Numeric 3) s)
-                (Add (Card (Numeric 2) s)
-                Empty)))))))))))))
+-- fullSuit: returns a hand consisting of all the cards in the given suit
+fullSuit :: Suit -> Hand
+fullSuit s =  Add (Card Ace s)   $
+              Add (Card King s)  $
+              Add (Card Queen s) $
+              Add (Card Jack s)  $ getSuitNumerics [2..10] s
 
--- Draw : Given a deck and a hand, 
+
+-- getSuitNumerics: get all the numeric cards from a suit
+getSuitNumerics :: [Integer] -> Suit -> Hand
+getSuitNumerics [] _ = Empty
+getSuitNumerics (n:ns) s = Add (Card (Numeric n) s) $ getSuitNumerics ns s
+
+
+-- Draw : Given a deck and a hand,
 --        draw one card from the deck and put on the hand.
 draw :: Hand -> Hand -> (Hand, Hand)
-draw Empty hand             = error "draw: The deck is empty."
-draw (Add card hand1) hand2 = (hand1 , (Add card hand2))
+draw Empty _                = error "draw: The deck is empty."
+draw (Add card hand1) hand2 = (hand1 , Add card hand2)
 
 
 -- playBank : Given a deck, plays for the bank according to the rules
 --            and returns the bank’s final hand
-
 playBank' :: Hand -> Hand -> Hand
 playBank' deck bankHand  | value bankHand < 16 = playBank' deck' bankHand'
                          | otherwise           = bankHand
-        where (deck' , bankHand') = draw deck bankHand 
+        where (deck' , bankHand') = draw deck bankHand
+
 
 playBank :: Hand -> Hand
 playBank deck = playBank' deck Empty
@@ -128,57 +124,51 @@ playBank deck = playBank' deck Empty
 
 -- shuffle : shuffles a deck of cards
 shuffle :: StdGen -> Hand -> Hand
-shuffle gen deck = shuffleHelper gen deck Empty
+shuffle gen deck = shuffle' gen deck Empty
 
+shuffle' :: StdGen -> Hand -> Hand -> Hand
+shuffle' gen Empty hand = hand
+shuffle' gen deck hand  = shuffle' gen' deck' (Add card' hand)
+              where (deck', card', gen') = getRandomCard gen deck
 
-
--- shuffleHelper : 
-shuffleHelper :: StdGen -> Hand -> Hand -> Hand
-shuffleHelper gen Empty hand = hand
-shuffleHelper gen deck hand  = shuffleHelper gen' deck' (Add card' hand) 
-              where ((deck', card'), gen') = getRandomCard gen deck
 
 -- getRandomCard : gets a random card from a deck
-getRandomCard :: StdGen -> Hand -> ((Hand, Card), StdGen)
-getRandomCard gen deck = ((pickCard deck Empty n), gen') 
-                            where (gen', n) = getRandomNumber gen (size deck-1)
+getRandomCard :: StdGen -> Hand -> (Hand, Card, StdGen)
+getRandomCard gen deck = (hand, card, gen')
+             where (gen', n) = getRandomNumber gen (size deck-1)
+                   (hand, card) = pickCard n deck
 
 
-pickCard :: Hand -> Hand -> Integer -> (Hand, Card)
-pickCard Empty _ _               = error "pickCard: empty hand."
-pickCard (Add card source) dest n 
-                    | n == 0     = ((source <+ dest), card)
-                    | otherwise  = pickCard source (Add card dest) (n-1)
+-- pickCard : pick a card at the n position on the hand
+pickCard :: Integer -> Hand -> (Hand, Card)
+pickCard _ Empty                    = error "Can't pick card of empty."
+pickCard n (Add c h) | n < 0        = error "Can't pick negative card."
+                     | n > size h+0 = error "Card out of bounds."
+                     | n == 0       = (h, c)
+                     | otherwise    = (Add c hand, card)
+                     where (hand, card) = pickCard (n - 1) h
 
+
+-- generates a random integer between 0 and max
 getRandomNumber :: StdGen -> Integer -> (StdGen, Integer)
-getRandomNumber gen max = (gen', n) 
+getRandomNumber gen max = (gen', n)
                 where (n, gen') = randomR (0, max) gen
-{-
--- removeCard : removes the n-th card from a deck
-removeCard :: Hand -> Integer -> Hand
-removeCard Empty _ = Empty
-removeCard (Add card hand) n  | n == 1    = hand
-                              | otherwise = (Add card (removeCard hand (n-1)))
 
 
--- pickCard : pick a card from a deck
-pickCard :: Hand -> Integer -> Card
-pickCard Empty _                        = error "pickCard: empty hand."
-pickCard (Add card hand) n  | n == 1    = card
-                            | otherwise = pickCard hand (n-1) -}
-
-
--- shuffle properties 
+-- shuffle properties
 belongsTo :: Card -> Hand -> Bool
 c `belongsTo` Empty       = False
 c `belongsTo` (Add card h)  = c == card || c `belongsTo` h
 
+
 prop_shuffle_sameCards :: StdGen -> Card -> Hand -> Bool
 prop_shuffle_sameCards g c h = c `belongsTo` h == c `belongsTo` shuffle g h
+
 
 -- prop_size_shuffle : Size not changed by shuffle
 prop_size_shuffle :: StdGen -> Hand -> Bool
 prop_size_shuffle g hand = size hand == size (shuffle g hand)
+
 
 {-
  *** main : run the game **
