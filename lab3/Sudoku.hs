@@ -68,7 +68,7 @@ printSudoku :: Sudoku -> IO ()
 printSudoku (Sudoku row) = sequence_
                            [putStrLn $ rowToString cols | cols <- row]
   where rowToString :: [Maybe Int] -> String
-        rowToString = map $ maybe '.' chr
+        rowToString = map $ maybe '.' intToDigit
 
 -- readSudoku file reads from the file, and either delivers it, or stops
 -- if the file did not contain a sudoku
@@ -81,7 +81,7 @@ readSudoku fp = do
 
         charToMaybe :: Char -> Maybe Int
         charToMaybe n | n == '.'  = Nothing
-                      | isDigit n = Just $ ord n - ord '0'
+                      | isDigit n = Just $ digitToInt n
                       | otherwise = error "Invalid character in file."
 
         validateSudoku s | isSudoku s = s
@@ -143,3 +143,16 @@ blocks (Sudoku rows) = rows                              -- rows
 -- Checks that all blocks do not contain the same digit twice.
 isOkay :: Sudoku -> Bool
 isOkay = all isOkayBlock . blocks
+
+example :: Sudoku
+example =Sudoku
+      [ [Just 3, Just 6, Nothing,Nothing,Just 7, Just 1, Just 2, Nothing,Nothing]
+      , [Nothing,Just 5, Nothing,Nothing,Nothing,Nothing,Just 1, Just 8, Nothing]
+      , [Nothing,Nothing,Just 9, Just 2, Nothing,Just 4, Just 7, Nothing,Nothing]
+      , [Nothing,Nothing,Nothing,Nothing,Just 1, Just 3, Nothing,Just 2, Just 8]
+      , [Just 4, Nothing,Nothing,Just 5, Nothing,Just 2, Nothing,Nothing,Just 9]
+      , [Just 2, Just 7, Nothing,Just 4, Just 6, Nothing,Nothing,Nothing,Nothing]
+      , [Nothing,Nothing,Just 5, Just 3, Nothing,Just 8, Just 9, Nothing,Nothing]
+      , [Nothing,Just 8, Just 3, Nothing,Nothing,Nothing,Nothing,Just 6, Nothing]
+      , [Nothing,Nothing,Just 7, Just 6, Just 9, Nothing,Nothing,Just 4, Just 3]
+      ]
