@@ -57,47 +57,6 @@ isSolved sudo = hasOnlyNumValues (rows sudo)
           areNumValues :: [Maybe Int] -> Bool
           areNumValues rw = and [isJust x | x<-rw]
 
-
--- ******  TESTS --
-example :: Sudoku
-example =Sudoku
-      [ [Just 3, Just 6, Nothing,Nothing,Just 7, Just 1, Just 2, Nothing,Nothing]
-      , [Nothing,Just 5, Nothing,Nothing,Nothing,Nothing,Just 1, Just 8, Nothing]
-      , [Nothing,Nothing,Just 9, Just 2, Nothing,Just 4, Just 7, Nothing,Nothing]
-      , [Nothing,Nothing,Nothing,Nothing,Just 1, Just 3, Nothing,Just 2, Just 8]
-      , [Just 4, Nothing,Nothing,Just 5, Nothing,Just 2, Nothing,Nothing,Just 9]
-      , [Just 2, Just 7, Nothing,Just 4, Just 6, Nothing,Nothing,Nothing,Nothing]
-      , [Nothing,Nothing,Just 5, Just 3, Nothing,Just 8, Just 9, Nothing,Nothing]
-      , [Nothing,Just 8, Just 3, Nothing,Nothing,Nothing,Nothing,Just 6, Nothing]
-      , [Nothing,Nothing,Just 7, Just 6, Just 9, Nothing,Nothing,Just 4, Just 3]
-      ]
-
-
-exampleFull :: Sudoku -- incorect
-exampleFull =Sudoku
-      [ [Just 3, Just 6, Just 8,Just 8,Just 7, Just 1, Just 2, Just 8,Just 8]
-      , [Just 8,Just 5, Just 8,Just 8,Just 8,Just 8,Just 1, Just 8, Just 8]
-      , [Just 8,Just 8,Just 9, Just 2, Just 8,Just 4, Just 7, Just 8,Just 8]
-      , [Just 8,Just 8,Just 8,Just 8,Just 1, Just 3, Just 8,Just 2, Just 8]
-      , [Just 4, Just 8,Just 8,Just 5, Just 8,Just 2, Just 8,Just 8,Just 9]
-      , [Just 2, Just 7, Just 8,Just 4, Just 6, Just 8,Just 8,Just 8,Just 8]
-      , [Just 8,Just 8,Just 5, Just 3, Just 8,Just 8, Just 9, Just 8,Just 8]
-      , [Just 8,Just 8, Just 3, Just 8,Just 8,Just 8,Just 8,Just 6, Just 8]
-      , [Just 8,Just 8,Just 7, Just 6, Just 9, Just 8,Just 8,Just 4, Just 3]
-      ]
-
-exampleSolved :: Sudoku -- correct
-exampleSolved =Sudoku
-      [ [Just 2,Just 1,Just 5,Just 7,Just 6,Just 8,Just 3,Just 4,Just 9]
-      , [Just 7,Just 3,Just 9,Just 5,Just 2,Just 4,Just 6,Just 8,Just 1]
-      , [Just 4,Just 8,Just 6,Just 3,Just 9,Just 1,Just 7,Just 5,Just 2]
-      , [Just 6,Just 2,Just 3,Just 8,Just 7,Just 5,Just 9,Just 1,Just 4]
-      , [Just 1,Just 5,Just 7,Just 6,Just 4,Just 9,Just 2,Just 3,Just 8]
-      , [Just 9,Just 4,Just 8,Just 1,Just 3,Just 2,Just 5,Just 7,Just 6]
-      , [Just 5,Just 7,Just 1,Just 9,Just 8,Just 6,Just 4,Just 2,Just 3]
-      , [Just 8,Just 6,Just 2,Just 4,Just 5,Just 3,Just 1,Just 9,Just 7]
-      , [Just 3,Just 9,Just 4,Just 2,Just 1,Just 7,Just 8,Just 6,Just 5]
-      ]
 -------------------------------------------------------------------------
 
 {- 
@@ -184,6 +143,3 @@ blocks (Sudoku rows) = rows                              -- rows
 -- Checks that all blocks do not contain the same digit twice.
 isOkay :: Sudoku -> Bool
 isOkay = all isOkayBlock . blocks
-
-prop_isOkay :: Bool
-prop_isOkay = isOkay exampleSolved && not isOkay exampleFull
