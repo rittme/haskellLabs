@@ -21,10 +21,8 @@ data Sudoku = Sudoku { rows :: [[Maybe Int]] }
 
 -- allBlankSudoku is a sudoku with just blanks
 allBlankSudoku :: Sudoku
-allBlankSudoku = Sudoku [allBlankRows | x<-[1..9]]
-    where allBlankRows :: [Maybe Int]
-          allBlankRows = [Nothing | x<-[1..9]] 
-    
+allBlankSudoku = Sudoku [replicate 9 Nothing | x<-[1..9]]
+
 
 -- isSudoku sud checks if sud is really a valid representation of a sudoku
 -- puzzle
@@ -135,24 +133,10 @@ prop_isOkayBlock = isOkayBlock [Just 1, Just 7, Nothing,
 blocks :: Sudoku -> [Block]
 blocks (Sudoku rows) = rows                              -- rows
                      ++ [map (!! n) rows | n <- [0..8]]  -- columns
-                     ++ squareBlocks rows                -- 3x3 squares
-  where squareBlocks rows = [foldr ((++) . take 3 . drop x) []
-                            [(!! n) rows | n <- [y .. y + 2]]
-                            | x <- [0, 3, 6], y <- [0, 3, 6]]
+                     ++ [foldr ((++) . take 3 . drop x) [] -- 3x3 blocks
+                        [(!! n) rows | n <- [y .. y + 2]]
+                        | x <- [0, 3, 6], y <- [0, 3, 6]]
 
 -- Checks that all blocks do not contain the same digit twice.
 isOkay :: Sudoku -> Bool
 isOkay = all isOkayBlock . blocks
-
-example :: Sudoku
-example =Sudoku
-      [ [Just 3, Just 6, Nothing,Nothing,Just 7, Just 1, Just 2, Nothing,Nothing]
-      , [Nothing,Just 5, Nothing,Nothing,Nothing,Nothing,Just 1, Just 8, Nothing]
-      , [Nothing,Nothing,Just 9, Just 2, Nothing,Just 4, Just 7, Nothing,Nothing]
-      , [Nothing,Nothing,Nothing,Nothing,Just 1, Just 3, Nothing,Just 2, Just 8]
-      , [Just 4, Nothing,Nothing,Just 5, Nothing,Just 2, Nothing,Nothing,Just 9]
-      , [Just 2, Just 7, Nothing,Just 4, Just 6, Nothing,Nothing,Nothing,Nothing]
-      , [Nothing,Nothing,Just 5, Just 3, Nothing,Just 8, Just 9, Nothing,Nothing]
-      , [Nothing,Just 8, Just 3, Nothing,Nothing,Nothing,Nothing,Just 6, Nothing]
-      , [Nothing,Nothing,Just 7, Just 6, Just 9, Nothing,Nothing,Just 4, Just 3]
-      ]
