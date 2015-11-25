@@ -10,7 +10,7 @@ module Sudoku where
 import Test.QuickCheck
 import Data.Maybe
 import Data.List
-
+import Data.Char
 {- 
   #A
 -}
@@ -95,12 +95,27 @@ exampleFull =Sudoku
 
 -- printSudoku sud prints a representation of the sudoku sud on the screen
 printSudoku :: Sudoku -> IO ()
-printSudoku = undefined
+printSudoku (Sudoku row) = sequence_
+                           [putStrLn $ rowToString cols | cols <- row]
+  where rowToString :: [Maybe Int] -> String
+        rowToString = map $ maybe '.' chr
 
 -- readSudoku file reads from the file, and either delivers it, or stops
 -- if the file did not contain a sudoku
 readSudoku :: FilePath -> IO Sudoku
-readSudoku = undefined
+readSudoku fp = do
+           rawS <- readFile fp
+           return $ validateSudoku $ Sudoku $ map stringToRow (lines rawS)
+  where stringToRow :: String -> [Maybe Int]
+        stringToRow = map charToMaybe
+
+        charToMaybe :: Char -> Maybe Int
+        charToMaybe n | n == '.'  = Nothing
+                      | isDigit n = Just $ ord n - ord '0'
+                      | otherwise = error "Invalid character in file."
+
+        validateSudoku s | isSudoku s = s
+                         | otherwise  = error "Invalid sudoku file."
 
 -------------------------------------------------------------------------
 
