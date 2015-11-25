@@ -22,8 +22,9 @@ data Sudoku = Sudoku { rows :: [[Maybe Int]] }
 -- allBlankSudoku is a sudoku with just blanks
 allBlankSudoku :: Sudoku
 allBlankSudoku = (Sudoku [allBlankRows | x<-[1..9]])
-      where allBlankRows = [Nothing | x<-[1..9]] 
-      --allBlankRows :: [Maybe Int]
+    where allBlankRows :: [Maybe Int]
+          allBlankRows = [Nothing | x<-[1..9]] 
+    
 
 -- isSudoku sud checks if sud is really a valid representation of a sudoku
 -- puzzle
@@ -107,7 +108,7 @@ readSudoku = undefined
 {- 
   #C
 -}
--- cell generates an arbitrary cell in a Sudoku (ideally ≈ 90% Nothing)
+-- cell generates an arbitrary cell in a Sudoku (usually ≈ 90% Nothing)
 cell :: Gen (Maybe Int)
 cell = frequency[(73, (return Nothing)), (8, sudoNum)] where 
   sudoNum = 
@@ -124,6 +125,6 @@ instance Arbitrary Sudoku where
 
 -- each generated Sudoku is actually a Sudoku
 prop_Sudoku :: Sudoku -> Bool
-prop_Sudoku sudo =  isSudoku sudo
+prop_Sudoku sudo = isSudoku sudo
 
 -------------------------------------------------------------------------
