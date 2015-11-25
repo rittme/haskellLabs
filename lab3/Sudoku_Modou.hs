@@ -103,9 +103,16 @@ readSudoku = undefined
 
 -------------------------------------------------------------------------
 
--- cell generates an arbitrary cell in a Sudoku
+{- 
+  #C
+-}
+-- cell generates an arbitrary cell in a Sudoku (ideally ≈ 90% Nothing)
 cell :: Gen (Maybe Int)
-cell = undefined
+cell = frequency[(73, (return Nothing)), (8, sudoNum)] where 
+  sudoNum = 
+    do n <- choose(1,9)
+       return (Just n)
+
 
 -- an instance for generating Arbitrary Sudokus
 instance Arbitrary Sudoku where
@@ -113,4 +120,8 @@ instance Arbitrary Sudoku where
     do rows <- sequence [ sequence [ cell | j <- [1..9] ] | i <- [1..9] ]
        return (Sudoku rows)
 
+
+-- each generated Sudoku is actually a Sudoku
+prop_Sudoku :: Sudoku -> Bool
+prop_Sudoku sudo =  isSudoku sudo
 -------------------------------------------------------------------------
