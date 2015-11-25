@@ -85,6 +85,19 @@ exampleFull =Sudoku
       , [Just 8,Just 8, Just 3, Just 8,Just 8,Just 8,Just 8,Just 6, Just 8]
       , [Just 8,Just 8,Just 7, Just 6, Just 9, Just 8,Just 8,Just 4, Just 3]
       ]
+
+exampleSolved :: Sudoku -- correct
+exampleSolved =Sudoku
+      [ [Just 2,Just 1,Just 5,Just 7,Just 6,Just 8,Just 3,Just 4,Just 9]
+      , [Just 7,Just 3,Just 9,Just 5,Just 2,Just 4,Just 6,Just 8,Just 1]
+      , [Just 4,Just 8,Just 6,Just 3,Just 9,Just 1,Just 7,Just 5,Just 2]
+      , [Just 6,Just 2,Just 3,Just 8,Just 7,Just 5,Just 9,Just 1,Just 4]
+      , [Just 1,Just 5,Just 7,Just 6,Just 4,Just 9,Just 2,Just 3,Just 8]
+      , [Just 9,Just 4,Just 8,Just 1,Just 3,Just 2,Just 5,Just 7,Just 6]
+      , [Just 5,Just 7,Just 1,Just 9,Just 8,Just 6,Just 4,Just 2,Just 3]
+      , [Just 8,Just 6,Just 2,Just 4,Just 5,Just 3,Just 1,Just 9,Just 7]
+      , [Just 3,Just 9,Just 4,Just 2,Just 1,Just 7,Just 8,Just 6,Just 5]
+      ]
 -------------------------------------------------------------------------
 
 {- 
