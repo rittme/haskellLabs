@@ -92,6 +92,7 @@ exampleFull =Sudoku
 {- 
   #B
 -}
+
 -- printSudoku sud prints a representation of the sudoku sud on the screen
 printSudoku :: Sudoku -> IO ()
 printSudoku = undefined
