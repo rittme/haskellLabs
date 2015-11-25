@@ -11,7 +11,7 @@ import Test.QuickCheck
 import Data.Maybe
 import Data.List
 import Data.Char
-{- 
+{-
   #A
 -}
 -------------------------------------------------------------------------
@@ -30,7 +30,7 @@ isSudoku :: Sudoku -> Bool
 isSudoku sudo = isMatrixCorrect (rows sudo) && length (rows sudo) == 9
 
     where isMatrixCorrect :: [[Maybe Int]] -> Bool
-          isMatrixCorrect = 
+          isMatrixCorrect =
               foldr (\ row -> (&&) (hasSudokuValues row && length row == 9))
               True
 
@@ -54,7 +54,7 @@ isSolved sudo = hasOnlyNumValues (rows sudo)
 
 -------------------------------------------------------------------------
 
-{- 
+{-
   #B
 -}
 
@@ -84,13 +84,13 @@ readSudoku fp = do
 
 -------------------------------------------------------------------------
 
-{- 
+{-
   #C
 -}
 -- cell generates an arbitrary cell in a Sudoku (usually ≈ 90% Nothing)
 cell :: Gen (Maybe Int)
-cell = frequency[(73, return Nothing), (8, sudoNum)] where 
-  sudoNum = 
+cell = frequency[(73, return Nothing), (8, sudoNum)] where
+  sudoNum =
     do n <- choose(1,9)
        return (Just n)
 
@@ -117,19 +117,10 @@ type Block = [Maybe Int]
 isOkayBlock :: Block -> Bool
 isOkayBlock b = length (catMaybes b) == length (nub (catMaybes b))
 
--- Simple test for isOkayBlock
-prop_isOkayBlock :: Bool
-prop_isOkayBlock = isOkayBlock [Just 1, Just 7, Nothing,
-                                Nothing, Just 3, Nothing,
-                                Nothing, Nothing, Just 2] &&
-                   not (isOkayBlock [Just 1, Just 7, Nothing,
-                                     Just 7, Just 3, Nothing,
-                                     Nothing, Nothing, Just 2])
-
 -- Creates a list of all blocks of that Sudoku
 blocks :: Sudoku -> [Block]
-blocks (Sudoku rows) = rows                              -- rows
-                     ++ [map (!! n) rows | n <- [0..8]]  -- columns
+blocks (Sudoku rows) = rows                                -- rows
+                     ++ [map (!! n) rows | n <- [0..8]]    -- columns
                      ++ [foldr ((++) . take 3 . drop x) [] -- 3x3 blocks
                         [(!! n) rows | n <- [y .. y + 2]]
                         | x <- [0, 3, 6], y <- [0, 3, 6]]
