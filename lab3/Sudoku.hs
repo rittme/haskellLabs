@@ -21,7 +21,7 @@ data Sudoku = Sudoku { rows :: [[Maybe Int]] }
 
 -- allBlankSudoku is a sudoku with just blanks
 allBlankSudoku :: Sudoku
-allBlankSudoku = (Sudoku [allBlankRows | x<-[1..9]])
+allBlankSudoku = Sudoku [allBlankRows | x<-[1..9]]
     where allBlankRows :: [Maybe Int]
           allBlankRows = [Nothing | x<-[1..9]] 
     
@@ -29,36 +29,33 @@ allBlankSudoku = (Sudoku [allBlankRows | x<-[1..9]])
 -- isSudoku sud checks if sud is really a valid representation of a sudoku
 -- puzzle
 isSudoku :: Sudoku -> Bool
-isSudoku sudo = (isMatrixCorrect (rows sudo)) && (length (rows sudo)) == 9
+isSudoku sudo = isMatrixCorrect (rows sudo) && length (rows sudo) == 9
 
     where isMatrixCorrect :: [[Maybe Int]] -> Bool
-          isMatrixCorrect []        = True
-          isMatrixCorrect (row:xs)  = 
-                        (((hasSudokuValues row) && length row == 9)
-                        && (isMatrixCorrect xs))
+          isMatrixCorrect = 
+              foldr (\ row -> (&&) (hasSudokuValues row && length row == 9))
+              True
 
           hasSudokuValues :: [Maybe Int] -> Bool
-          hasSudokuValues row = and $ [True | x<-row, isValueOK x]
+          hasSudokuValues row = and [True | x<-row, isValueOK x]
 
           isValueOK :: Maybe Int -> Bool
           isValueOK Nothing   = True
-          isValueOK x         = ((fromMaybe' x) > 0) || ((fromMaybe' x) < 10)
+          isValueOK x         = fromMaybe' x > 0 || fromMaybe' x < 10
 
-          fromMaybe' :: Maybe a -> a -- to delete and use the original one ??
+          fromMaybe' :: Maybe a -> a 
           fromMaybe' (Just x) = x
 
 
 -- isSolved sud checks if sud is already solved, i.e. there are no blanks
 isSolved :: Sudoku -> Bool
-isSolved sudo = (hasOnlyNumValues (rows sudo))
+isSolved sudo = hasOnlyNumValues (rows sudo)
 
     where hasOnlyNumValues :: [[Maybe Int]] -> Bool
-          hasOnlyNumValues []       = True
-          hasOnlyNumValues (row:xs) = ((areNumValues row) && 
-                                      (hasOnlyNumValues xs))
+          hasOnlyNumValues = foldr ((&&) . areNumValues) True
 
           areNumValues :: [Maybe Int] -> Bool
-          areNumValues rw = and $ [not (x == Nothing) | x<-rw]
+          areNumValues rw = and [isJust x | x<-rw]
 
 
 -- ******  TESTS --
@@ -125,7 +122,7 @@ readSudoku fp = do
 -}
 -- cell generates an arbitrary cell in a Sudoku (usually ≈ 90% Nothing)
 cell :: Gen (Maybe Int)
-cell = frequency[(73, (return Nothing)), (8, sudoNum)] where 
+cell = frequency[(73, return Nothing), (8, sudoNum)] where 
   sudoNum = 
     do n <- choose(1,9)
        return (Just n)
@@ -140,6 +137,6 @@ instance Arbitrary Sudoku where
 
 -- each generated Sudoku is actually a Sudoku
 prop_Sudoku :: Sudoku -> Bool
-prop_Sudoku sudo = isSudoku sudo
+prop_Sudoku = isSudoku
 
 -------------------------------------------------------------------------
