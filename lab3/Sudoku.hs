@@ -118,8 +118,8 @@ isOkayBlock b = length (catMaybes b) == length (nub (catMaybes b))
 
 -- Creates a list of all blocks of that Sudoku
 blocks :: Sudoku -> [Block]
-blocks (Sudoku rows) = rows                                -- rows
-                     ++ [map (!! n) rows | n <- [0..8]]    -- columns
+blocks (Sudoku rows) =  rows                               -- rows
+                     ++ transpose rows                     -- columns
                      ++ [foldr ((++) . take 3 . drop x) [] -- 3x3 blocks
                         [(!! n) rows | n <- [y .. y + 2]]
                         | x <- [0, 3, 6], y <- [0, 3, 6]]
