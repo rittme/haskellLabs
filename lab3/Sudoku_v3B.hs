@@ -156,3 +156,84 @@ exampleFull =Sudoku
       , [Just 8,Just 8, Just 3, Just 8,Just 8,Just 8,Just 8,Just 6, Just 8]
       , [Just 8,Just 8,Just 7, Just 6, Just 9, Just 8,Just 8,Just 4, Just 3]
       ]
+
+
+-------------------------------------------------------------------------
+
+{-
+  #E
+-}
+-- Position : coordinate that identifies a cell in the Sudoku
+type Pos = (Int,Int)
+
+-- blanks: returns positions in the given Sudoku that are still blank
+blanks :: Sudoku -> [Pos]
+blanks sudo = filter ( \ (x,y) -> isBlank sudo (x,y)) allSudukoPos
+
+      where allSudukoPos :: [Pos]
+            allSudukoPos = [(x,y) | x <- [0..8], y <- [0..8]]
+
+            isBlank :: Sudoku -> Pos -> Bool
+            isBlank sudo (row,col) = 
+                isNothing ((!!) ((!!) (rows sudo) row) col)
+
+-- prop_blanks
+prop_blanks :: Sudoku -> Bool
+prop_blanks sudo = all 
+        (\(x,y) -> isNothing ((!!) ((!!) (rows sudo) x) y))
+        (blanks sudo)
+-- Note : we could reuse 'isBlank' function above
+
+-- (!!=) : updates the given list with the new value at the given index
+(!!=) :: [a] -> (Int,a) -> [a]
+(!!=) (x:xs) (i, newVal)| i < 0 || i > length xs = error "Invalid index."
+                        | i == 0                 = newVal:xs
+                        | otherwise              = x:(xs !!= (i-1, newVal))
+
+-- properties :
+prop_updateListValue :: Eq a => [a] -> (Int,a) -> Bool
+prop_updateListValue list (i, value) = ((list !!= (i, value)) !! i) == value
+
+prop_updateListLength :: [a] -> (Int, a) -> Bool
+prop_updateListLength list (i,x) = length list == length (list !!= (i,x))
+
+-- update:updates the given Sudoku at the given position with the new value
+update :: Sudoku -> Pos -> Maybe Int -> Sudoku
+update sudo (x,y) value | x < 0 || x > 8  = error "Invalid Position."
+                        | otherwise       = Sudoku newRows
+          where newRows = rows sudo !!= (x, (rows sudo !! x) !!= (y,value))
+
+-- properties : ?? to improve 
+prop_updateValue :: Sudoku -> Pos -> Maybe Int -> Bool
+prop_updateValue sudo (x,y) value = 
+        (!!) ((!!) (rows (update sudo (x,y) value)) x) y == value
+
+
+-- candidates: determines which numbers could be legally
+--            written into the given blank position
+candidates :: Sudoku -> Pos -> [Int]
+candidates sudo (i,j) | i < 0 || i > 8  = error "Invalid Position."
+                      | j < 0 || j > 8  = error "Invalid Position."
+                      | otherwise       = (row `intersect` col) `intersect` box
+
+    where full = [1..9]
+          row  = full \\ catMaybes (rows sudo !! i)
+          col  = full \\ catMaybes 
+                        ([map (!! n) (rows sudo ) | n <- [0..8]] !! j)
+          box  = full \\ catMaybes ([foldr ((++) . take 3 . drop x) []
+                        [(!! n) (rows sudo) | n <- [y .. y + 2]] |
+                        x <- [0, 3, 6], y <- [0, 3, 6]] !! getNumBox i j)
+
+          getNumBox :: Int -> Int -> Int
+          getNumBox i j | (i >= 0 && i<=2) && (j >= 0 && j <=2) = 0
+                        | (i >= 3 && i<=5) && (j >= 0 && j <=2) = 1
+                        | (i >= 6 && i<=8) && (j >= 0 && j <=2) = 2
+                        | (i >= 0 && i<=2) && (j >= 3 && j <=5) = 3
+                        | (i >= 3 && i<=5) && (j >= 3 && j <=5) = 4
+                        | (i >= 6 && i<=8) && (j >= 3 && j <=5) = 5
+                        | (i >= 0 && i<=2) && (j >= 6 && j <=8) = 6
+                        | (i >= 3 && i<=5) && (j >= 6 && j <=8) = 7
+                        | (i >= 6 && i<=8) && (j >= 6 && j <=8) = 8
+
+
+--properties : TODO
