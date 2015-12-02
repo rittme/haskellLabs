@@ -189,7 +189,7 @@ candidates sudo (i,j) | i < 0 || i > 8  = error "Invalid Position."
     where full = [1..9]
           blocs = blocks sudo
           row  = full \\ catMaybes (blocs !! i)
-          col  = full \\ catMaybes(blocs !! (j + 9))
+          col  = full \\ catMaybes (blocs !! (j + 9))
           box  = full \\ catMaybes (blocs !! (getNumBox i j + 18))
 
           getNumBox :: Int -> Int -> Int
@@ -217,10 +217,12 @@ prop_candidates sudo (x, y) = all (\ s -> isSudoku s && isOkay s) sudokus
   #F
 -}
 
+-- Solves the given Sudoku
 solve :: Sudoku -> Maybe Sudoku
 solve sud | isSudoku sud && isOkay sud = solve' sud
           | otherwise = Nothing
 
+-- Solve Sudoku helper function
 solve' :: Sudoku -> Maybe Sudoku
 solve' sud | null (blanks sud) = Just sud
            | otherwise = listToMaybe $ mapMaybe solve' updatedSudokus
@@ -228,6 +230,7 @@ solve' sud | null (blanks sud) = Just sud
         firstCandidates = map Just (candidates sud firstBlank)
         updatedSudokus = map (update sud firstBlank) firstCandidates
 
+-- Read a sudoku file, solve it and print it
 readAndSolve :: FilePath -> IO ()
 readAndSolve path = do
                       sud <- readSudoku path;
@@ -236,6 +239,7 @@ readAndSolve path = do
         printResult Nothing  = putStrLn "Unsolvable sudoku"
         printResult (Just s) = printSudoku s
 
+-- Checks if the first Sudoku is a solution of the second one
 isSolutionOf :: Sudoku -> Sudoku -> Bool
 isSolutionOf s b = isOkay s && null (blanks s) && compareExisting s b
   where compareExisting :: Sudoku -> Sudoku -> Bool
@@ -244,10 +248,12 @@ isSolutionOf s b = isOkay s && null (blanks s) && compareExisting s b
         sameDigit :: Sudoku -> Sudoku -> Pos -> Bool
         sameDigit (Sudoku s) (Sudoku d) (x,y) = (d !! x!!y) == (s !!x!!y)
 
+-- Checks if the function solve is sound
 prop_SolveSound :: Sudoku -> Property
 prop_SolveSound s = isSudoku s && isOkay s && isJust (solve s)
                     ==> fromJust (solve s) `isSolutionOf` s
 
+-- Helper to test with fewer examples
 fewerChecks :: Testable prop => prop -> IO ()
 fewerChecks = quickCheckWith stdArgs{ maxSuccess = 30 }
 
