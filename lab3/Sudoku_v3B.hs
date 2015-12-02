@@ -145,12 +145,12 @@ blanks sudo = filter ( \ (x,y) -> isBlank sudo (x,y)) allSudukoPos
 
             isBlank :: Sudoku -> Pos -> Bool
             isBlank sudo (row,col) =
-                isNothing ((!!) ((!!) (rows sudo) row) col)
+                isNothing (rows sudo !! row !! col)
 
 -- prop_blanks
 prop_blanks :: Sudoku -> Bool
 prop_blanks sudo = all
-        (\(x,y) -> isNothing ((!!) ((!!) (rows sudo) x) y))
+        (\(x,y) -> isNothing (rows sudo !! x !! y))
         (blanks sudo)
 -- Note : we could reuse 'isBlank' function above
 
@@ -176,7 +176,7 @@ update sudo (x,y) value | x < 0 || x > 8  = error "Invalid Position."
 -- properties : ?? to improve
 prop_updateValue :: Sudoku -> Pos -> Maybe Int -> Bool
 prop_updateValue sudo (x,y) value =
-        (!!) ((!!) (rows (update sudo (x,y) value)) x) y == value
+        (rows (update sudo (x,y) value) !! x) !! y == value
 
 
 -- candidates: determines which numbers could be legally
