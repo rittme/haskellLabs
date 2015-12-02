@@ -140,12 +140,12 @@ type Pos = (Int,Int)
 blanks :: Sudoku -> [Pos]
 blanks sudo = filter ( \ (x,y) -> isBlank sudo (x,y)) allSudukoPos
 
-      where allSudukoPos :: [Pos]
-            allSudukoPos = [(x,y) | x <- [0..8], y <- [0..8]]
-
-            isBlank :: Sudoku -> Pos -> Bool
+      where isBlank :: Sudoku -> Pos -> Bool
             isBlank sudo (row,col) =
                 isNothing ((!!) ((!!) (rows sudo) row) col)
+
+allSudukoPos :: [Pos]
+allSudukoPos = [(x,y) | x <- [0..8], y <- [0..8]]
 
 -- prop_blanks
 prop_blanks :: Sudoku -> Bool
@@ -229,6 +229,21 @@ readAndSolve :: FilePath -> IO ()
 readAndSolve path = do
                       sud <- readSudoku path;
                       printResult (solve sud)
-                      where printResult :: Maybe Sudoku -> IO()
-                            printResult Nothing  = putStrLn "Unsolvable sudoku"
-                            printResult (Just s) = printSudoku s
+  where printResult :: Maybe Sudoku -> IO()
+        printResult Nothing  = putStrLn "Unsolvable sudoku"
+        printResult (Just s) = printSudoku s
+
+isSolutionOf :: Sudoku -> Sudoku -> Bool
+isSolutionOf s b = isOkay s && null (blanks s) && compareExisting s b
+  where compareExisting :: Sudoku -> Sudoku -> Bool
+        compareExisting s r = all (sameDigit s r) $ allSudukoPos \\ blanks r
+
+        sameDigit :: Sudoku -> Sudoku -> Pos -> Bool
+        sameDigit (Sudoku s) (Sudoku d) (x,y) = (d !! x!!y) == (s !!x!!y)
+
+prop_SolveSound :: Sudoku -> Property
+prop_SolveSound s = isSudoku s && isOkay s && isJust (solve s)
+                    ==> fromJust (solve s) `isSolutionOf` s
+
+fewerChecks :: Testable prop => prop -> IO ()
+fewerChecks = quickCheckWith stdArgs{ maxSuccess = 30 }
