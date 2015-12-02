@@ -187,12 +187,10 @@ candidates sudo (i,j) | i < 0 || i > 8  = error "Invalid Position."
                       | otherwise       = (row `intersect` col) `intersect` box
 
     where full = [1..9]
-          row  = full \\ catMaybes (rows sudo !! i)
-          col  = full \\ catMaybes
-                        ([map (!! n) (rows sudo ) | n <- [0..8]] !! j)
-          box  = full \\ catMaybes ([foldr ((++) . take 3 . drop x) []
-                        [(!! n) (rows sudo) | n <- [y .. y + 2]] |
-                        x <- [0, 3, 6], y <- [0, 3, 6]] !! getNumBox i j)
+          blocs = blocks sudo
+          row  = full \\ catMaybes (blocs !! i)
+          col  = full \\ catMaybes(blocs !! (j + 9))
+          box  = full \\ catMaybes (blocs !! (getNumBox i j + 18))
 
           getNumBox :: Int -> Int -> Int
           getNumBox i j | (i >= 0 && i<=2) && (j >= 0 && j <=2) = 0
@@ -206,7 +204,12 @@ candidates sudo (i,j) | i < 0 || i > 8  = error "Invalid Position."
                         | (i >= 6 && i<=8) && (j >= 6 && j <=8) = 8
 
 
---properties : TODO
+--properties
+prop_candidates :: Sudoku -> Pos -> Bool
+prop_candidates sudo (x, y) = all (\ s -> isSudoku s && isOkay s) sudokus
+            where sudokus = [update sudo (x,y) (Just c) | c <- cands]
+                  cands   = candidates sudo (x,y)
+
 
 -------------------------------------------------------------------------
 
@@ -247,3 +250,4 @@ prop_SolveSound s = isSudoku s && isOkay s && isJust (solve s)
 
 fewerChecks :: Testable prop => prop -> IO ()
 fewerChecks = quickCheckWith stdArgs{ maxSuccess = 30 }
+
