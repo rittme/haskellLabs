@@ -119,7 +119,7 @@ isOkayBlock b = length (catMaybes b) == length (nub (catMaybes b))
 -- Creates a list of all blocks of that Sudoku
 blocks :: Sudoku -> [Block]
 blocks (Sudoku rows) = rows                                -- rows
-                     ++ [map (!! n) rows | n <- [0..8]]    -- columns
+                     ++ transpose rows                     -- columns
                      ++ [foldr ((++) . take 3 . drop x) [] -- 3x3 blocks
                         [(!! n) rows | n <- [y .. y + 2]]
                         | x <- [0, 3, 6], y <- [0, 3, 6]]
@@ -127,36 +127,6 @@ blocks (Sudoku rows) = rows                                -- rows
 -- Checks that all blocks do not contain the same digit twice.
 isOkay :: Sudoku -> Bool
 isOkay = all isOkayBlock . blocks
-
-
--- ******  TESTS --
-example :: Sudoku
-example =Sudoku
-      [ [Just 3, Just 6, Nothing,Nothing,Just 7, Just 1, Just 2, Nothing,Nothing]
-      , [Nothing,Just 5, Nothing,Nothing,Nothing,Nothing,Just 1, Just 8, Nothing]
-      , [Nothing,Nothing,Just 9, Just 2, Nothing,Just 4, Just 7, Nothing,Nothing]
-      , [Nothing,Nothing,Nothing,Nothing,Just 1, Just 3, Nothing,Just 2, Just 8]
-      , [Just 4, Nothing,Nothing,Just 5, Nothing,Just 2, Nothing,Nothing,Just 9]
-      , [Just 2, Just 7, Nothing,Just 4, Just 6, Nothing,Nothing,Nothing,Nothing]
-      , [Nothing,Nothing,Just 5, Just 3, Nothing,Just 8, Just 9, Nothing,Nothing]
-      , [Nothing,Just 8, Just 3, Nothing,Nothing,Nothing,Nothing,Just 6, Nothing]
-      , [Nothing,Nothing,Just 7, Just 6, Just 9, Nothing,Nothing,Just 4, Just 3]
-      ]
-
-
-exampleFull :: Sudoku -- incorect
-exampleFull =Sudoku
-      [ [Just 3, Just 6, Just 8,Just 8,Just 7, Just 1, Just 2, Just 8,Just 8]
-      , [Just 8,Just 5, Just 8,Just 8,Just 8,Just 8,Just 1, Just 8, Just 8]
-      , [Just 8,Just 8,Just 9, Just 2, Just 8,Just 4, Just 7, Just 8,Just 8]
-      , [Just 8,Just 8,Just 8,Just 8,Just 1, Just 3, Just 8,Just 2, Just 8]
-      , [Just 4, Just 8,Just 8,Just 5, Just 8,Just 2, Just 8,Just 8,Just 9]
-      , [Just 2, Just 7, Just 8,Just 4, Just 6, Just 8,Just 8,Just 8,Just 8]
-      , [Just 8,Just 8,Just 5, Just 3, Just 8,Just 8, Just 9, Just 8,Just 8]
-      , [Just 8,Just 8, Just 3, Just 8,Just 8,Just 8,Just 8,Just 6, Just 8]
-      , [Just 8,Just 8,Just 7, Just 6, Just 9, Just 8,Just 8,Just 4, Just 3]
-      ]
-
 
 -------------------------------------------------------------------------
 
@@ -174,12 +144,12 @@ blanks sudo = filter ( \ (x,y) -> isBlank sudo (x,y)) allSudukoPos
             allSudukoPos = [(x,y) | x <- [0..8], y <- [0..8]]
 
             isBlank :: Sudoku -> Pos -> Bool
-            isBlank sudo (row,col) = 
+            isBlank sudo (row,col) =
                 isNothing ((!!) ((!!) (rows sudo) row) col)
 
 -- prop_blanks
 prop_blanks :: Sudoku -> Bool
-prop_blanks sudo = all 
+prop_blanks sudo = all
         (\(x,y) -> isNothing ((!!) ((!!) (rows sudo) x) y))
         (blanks sudo)
 -- Note : we could reuse 'isBlank' function above
@@ -203,9 +173,9 @@ update sudo (x,y) value | x < 0 || x > 8  = error "Invalid Position."
                         | otherwise       = Sudoku newRows
           where newRows = rows sudo !!= (x, (rows sudo !! x) !!= (y,value))
 
--- properties : ?? to improve 
+-- properties : ?? to improve
 prop_updateValue :: Sudoku -> Pos -> Maybe Int -> Bool
-prop_updateValue sudo (x,y) value = 
+prop_updateValue sudo (x,y) value =
         (!!) ((!!) (rows (update sudo (x,y) value)) x) y == value
 
 
@@ -218,7 +188,7 @@ candidates sudo (i,j) | i < 0 || i > 8  = error "Invalid Position."
 
     where full = [1..9]
           row  = full \\ catMaybes (rows sudo !! i)
-          col  = full \\ catMaybes 
+          col  = full \\ catMaybes
                         ([map (!! n) (rows sudo ) | n <- [0..8]] !! j)
           box  = full \\ catMaybes ([foldr ((++) . take 3 . drop x) []
                         [(!! n) (rows sudo) | n <- [y .. y + 2]] |
@@ -237,3 +207,28 @@ candidates sudo (i,j) | i < 0 || i > 8  = error "Invalid Position."
 
 
 --properties : TODO
+
+-------------------------------------------------------------------------
+
+{-
+  #F
+-}
+
+solve :: Sudoku -> Maybe Sudoku
+solve sud | isSudoku sud && isOkay sud = solve' sud
+          | otherwise = Nothing
+
+solve' :: Sudoku -> Maybe Sudoku
+solve' sud | null (blanks sud) = Just sud
+           | otherwise = listToMaybe $ mapMaybe solve' updatedSudokus
+  where firstBlank = head (blanks sud)
+        firstCandidates = map Just (candidates sud firstBlank)
+        updatedSudokus = map (update sud firstBlank) firstCandidates
+
+readAndSolve :: FilePath -> IO ()
+readAndSolve path = do
+                      sud <- readSudoku path;
+                      printResult (solve sud)
+                      where printResult :: Maybe Sudoku -> IO()
+                            printResult Nothing  = putStrLn "Unsolvable sudoku"
+                            printResult (Just s) = printSudoku s
